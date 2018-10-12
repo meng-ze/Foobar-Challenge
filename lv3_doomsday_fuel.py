@@ -44,12 +44,123 @@
 # Test cases
 # ==========
 # Inputs:
-# (int) m = [[0, 2, 1, 0, 0], [0, 0, 0, 3, 4], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+# (int) m = [
+# [0, 2, 1, 0, 0], 
+# [0, 0, 0, 3, 4], 
+# [0, 0, 0, 0, 0], 
+# [0, 0, 0, 0, 0], 
+# [0, 0, 0, 0, 0]]
 # Output:
 # (int list) [7, 6, 8, 21]
 
 # Inputs:
-# (int) m = [[0, 1, 0, 0, 0, 1], [4, 0, 0, 3, 2, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
+# (int) m = [
+# [0, 1, 0, 0, 0, 1], 
+# [4, 0, 0, 3, 2, 0], 
+# [0, 0, 0, 0, 0, 0], 
+# [0, 0, 0, 0, 0, 0], 
+# [0, 0, 0, 0, 0, 0],
 # [0, 0, 0, 0, 0, 0]]
 # Output:
 # (int list) [0, 3, 2, 9, 14]
+
+def construct_tree(input_matrix):
+        queue = [[0, 1, 1]]
+        terminal_queue = []
+        non_terminal_nodes_set = set()
+
+        while len(queue) != 0:
+                tmp_node = queue.pop(0)
+                if tmp_node[0] in non_terminal_nodes_set:
+                        continue
+
+                tmp_queue = []
+                denominator = 0
+                for idx in range(len(input_matrix[tmp_node[0]])):
+                        if input_matrix[tmp_node[0]][idx] != 0:
+                                denominator += input_matrix[tmp_node[0]][idx]
+                                tmp_queue.append([idx, input_matrix[tmp_node[0]][idx], 0])
+                if denominator == 0:
+                        terminal_queue.append(tmp_node)
+                else:
+                        non_terminal_nodes_set.add(tmp_node[0])
+                        for idx_elem in tmp_queue:
+                                idx_elem[1] *= tmp_node[1]
+                                idx_elem[2] = denominator * tmp_node[2]
+                                queue.append(idx_elem)
+                        
+        return terminal_queue
+
+def find_gcd(number1, number2):
+        larger = max(number1, number2)
+        smaller = min(number1, number2)
+        remainder = larger%smaller
+        if remainder == 0:
+                return smaller
+        else:
+                return find_gcd(remainder, smaller)
+
+def dividen_add(node1, node2):
+        denominator_gcd = find_gcd(node1[1], node2[1])
+        lcm = node1[1]*node2[1]//denominator_gcd
+
+        node1_factor = lcm//node1[1]
+        node2_factor = lcm//node2[1]
+        return [node1[0]*node1_factor+node2[0]*node2_factor, lcm]
+
+def normalized_terminate_nodes(terminal_queue):
+        if len(terminal_queue) == 0:
+                return -1
+        result_dict = {}
+        for elem in terminal_queue:
+                if elem[0] not in result_dict:
+                        result_dict[elem[0]] = [elem[1], elem[2]]
+                else:
+                        result_dict[elem[0]] = dividen_add(result_dict[elem[0]], [elem[1], elem[2]])
+
+        tmp_tuple = [0, 1]
+        for key in result_dict:
+                tmp_tuple = dividen_add(tmp_tuple, result_dict[key])
+        for key in result_dict:
+                factor = tmp_tuple[1]//result_dict[key][1]
+                result_dict[key] = [factor*result_dict[key][0], tmp_tuple[1]]
+        
+        return result_dict, tmp_tuple[0]
+
+
+def answer(input_matrix):
+        scan_result = construct_tree(input_matrix)
+        sum_dict, new_denominator = normalized_terminate_nodes(scan_result)
+        returning_array = []
+        for row_number in range(len(input_matrix)):
+                is_all_zero = True
+                for col in input_matrix[row_number]:
+                        if col != 0:
+                                is_all_zero = False
+                                break
+                if is_all_zero:
+                        returning_array.append(row_number)
+
+        for idx in range(len(returning_array)):
+                returning_array[idx] = sum_dict.get(returning_array[idx], [0, 1])[0]
+        returning_array.append(new_denominator)
+
+        return returning_array
+
+if __name__ == '__main__':
+        testcase1 =[
+        [0, 1, 0, 0, 0, 1], 
+        [4, 0, 0, 3, 2, 0], 
+        [0, 0, 0, 0, 0, 0], 
+        [0, 0, 0, 0, 0, 0], 
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]]
+
+        testcase2 = [
+        [0, 2, 1, 0, 0], 
+        [0, 0, 0, 3, 4], 
+        [0, 0, 0, 0, 0], 
+        [0, 0, 0, 0, 0], 
+        [0, 0, 0, 0, 0]]
+        print(answer(testcase1))
+        print(answer(testcase2))
