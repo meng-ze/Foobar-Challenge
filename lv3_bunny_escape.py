@@ -44,13 +44,9 @@
 def bfs(maze, input_row, input_col):
     has_break_wall = False
 
-    if maze[input_row][input_col] != 0:
-        return
-
     queue = [[input_row, input_col, has_break_wall, 1]]
     while len(queue) != 0:
         coord_row, coord_col, has_break_wall, step = queue.pop(0)
-        #print('Searched: [{}][{}]'.format(coord_row, coord_col))
 
         if coord_row == len(maze)-1 and coord_col == len(maze[0])-1:
             return step
